@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   oldDoomFiles = [
@@ -14,9 +19,10 @@ let
     typescript = pkgs.tree-sitter-grammars.tree-sitter-typescript;
     typst = pkgs.tree-sitter-grammars.tree-sitter-typst;
   };
+  treeSitterLibraryExtension = if pkgs.stdenv.isDarwin then "dylib" else "so";
   linkTreeSitterGrammar = lang: grammar: ''
     for grammar_dir in $grammar_dirs; do
-      $DRY_RUN_CMD /bin/ln -sfn "${grammar}/parser" "$grammar_dir/libtree-sitter-${lang}.dylib"
+      $DRY_RUN_CMD /bin/ln -sfn "${grammar}/parser" "$grammar_dir/libtree-sitter-${lang}.${treeSitterLibraryExtension}"
     done
   '';
 in
@@ -30,50 +36,56 @@ in
     package = config.programs.emacs.finalPackage;
   };
 
-  home.packages = with pkgs; [
-    # Doom doctor/runtime tools.
-    cmake
-    coreutils-prefixed
-    fontconfig
-    glslang
-    gnumake
-    nerd-fonts.symbols-only
-    nodejs
-    pandoc
-    shellcheck
-    symbola
-    tinymist
+  home.packages =
+    with pkgs;
+    [
+      # Doom doctor/runtime tools.
+      cmake
+      fontconfig
+      glslang
+      gnumake
+      nerd-fonts.symbols-only
+      nodejs
+      pandoc
+      shellcheck
+      symbola
+      tinymist
 
-    # Language support used by the enabled Doom modules.
-    cabal-install
-    clang
-    clang-tools
-    ghc
-    haskell-language-server
-    haskellPackages.hoogle
-    nil
-    nixfmt
-    shfmt
-    tree-sitter
-    typescript-language-server
-  ];
+      # Language support used by the enabled Doom modules.
+      cabal-install
+      clang
+      clang-tools
+      ghc
+      haskell-language-server
+      haskellPackages.hoogle
+      nil
+      nixfmt
+      shfmt
+      tree-sitter
+      typescript-language-server
+    ]
+    ++ lib.optionals pkgs.stdenv.isDarwin [
+      coreutils-prefixed
+    ];
 
   fonts.fontconfig.enable = true;
 
-  home.activation.installDoomFonts = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
-    font_dir="$HOME/Library/Fonts"
-    symbola_src="${pkgs.symbola}/share/fonts/opentype/Symbola.otf"
-    symbols_nerd_src="${pkgs.nerd-fonts.symbols-only}/share/fonts/truetype/NerdFonts/Symbols/SymbolsNerdFontMono-Regular.ttf"
+  home.activation.installDoomFonts = lib.mkIf pkgs.stdenv.isDarwin (
+    lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+      font_dir="$HOME/Library/Fonts"
+      symbola_src="${pkgs.symbola}/share/fonts/opentype/Symbola.otf"
+      symbols_nerd_src="${pkgs.nerd-fonts.symbols-only}/share/fonts/truetype/NerdFonts/Symbols/SymbolsNerdFontMono-Regular.ttf"
 
-    $DRY_RUN_CMD /bin/mkdir -p "$font_dir"
-    $DRY_RUN_CMD /bin/rm -f "$font_dir/Symbola.otf" "$font_dir/SymbolsNerdFontMono-Regular.ttf"
-    $DRY_RUN_CMD /usr/bin/install -m 0644 "$symbola_src" "$font_dir/Symbola.otf"
-    $DRY_RUN_CMD /usr/bin/install -m 0644 "$symbols_nerd_src" "$font_dir/SymbolsNerdFontMono-Regular.ttf"
+      $DRY_RUN_CMD /bin/mkdir -p "$font_dir"
+      $DRY_RUN_CMD /bin/rm -f "$font_dir/Symbola.otf" "$font_dir/SymbolsNerdFontMono-Regular.ttf"
+      $DRY_RUN_CMD /usr/bin/install -m 0644 "$symbola_src" "$font_dir/Symbola.otf"
+      $DRY_RUN_CMD /usr/bin/install -m 0644 "$symbols_nerd_src" "$font_dir/SymbolsNerdFontMono-Regular.ttf"
 
-    if [ -z "''${DRY_RUN_CMD:-}" ]; then
-      /usr/bin/killall fontd >/dev/null 2>&1 || true
-    fi
-  '';
+      if [ -z "''${DRY_RUN_CMD:-}" ]; then
+        /usr/bin/killall fontd >/dev/null 2>&1 || true
+      fi
+    ''
+  );
 
   home.activation.installDoomTreeSitterGrammars = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
     grammar_dirs="$HOME/.config/emacs/.local/etc/tree-sitter $HOME/.config/emacs/.local/etc/@/tree-sitter $HOME/.config/emacs/.local/cache/tree-sitter"
@@ -86,8 +98,6 @@ in
     ${lib.concatStringsSep "\n" (lib.mapAttrsToList linkTreeSitterGrammar treeSitterGrammars)}
     $DRY_RUN_CMD /bin/ln -sfn "${pkgs.tinymist}/bin/tinymist" "$bin_dir/tinymist"
   '';
-
-
   home.activation.removeManagedDoomConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     for rel in ${lib.concatStringsSep " " (map lib.escapeShellArg oldDoomFiles)}; do
       path="$HOME/$rel"

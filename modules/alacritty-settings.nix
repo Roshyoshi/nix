@@ -1,4 +1,4 @@
-{ pkgs }:
+{ lib, pkgs }:
 
 {
   env = {
@@ -22,7 +22,9 @@
     };
     dynamic_padding = true;
     decorations = "full";
-    opacity = 0.98;
+    opacity = 1.0;
+  }
+  // lib.optionalAttrs pkgs.stdenv.isDarwin {
     option_as_alt = "Both";
   };
 

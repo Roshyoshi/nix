@@ -1,21 +1,36 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
-  alacrittySettings = import ./alacritty-settings.nix { inherit pkgs; };
-in { # Install standard binaries 
-home.packages = with pkgs; [
-    (lib.hiPrio codex)
-    fd
-    ripgrep
-    cargo
-    clippy
-    rust-analyzer
-    rustc
-    rustfmt
-    typst
-    wget
-    gemini-cli
-  ];
+  alacrittySettings = import ./alacritty-settings.nix { inherit lib pkgs; };
+in
+{
+  # Install standard binaries
+  home.packages =
+    with pkgs;
+    [
+      (lib.hiPrio codex)
+      fd
+      ripgrep
+      cargo
+      clippy
+      rust-analyzer
+      rustc
+      rustfmt
+      stow
+      typst
+      wget
+      gemini-cli
+      nerd-fonts.jetbrains-mono
+    ]
+    ++ lib.optionals pkgs.stdenv.isLinux [
+      wl-clipboard
+      xclip
+    ];
 
   home.file.".npmrc".text = ''
     prefix=${config.home.homeDirectory}/.npm-global
@@ -29,24 +44,33 @@ home.packages = with pkgs; [
     '';
   };
 
+  home.file.".stow-global-ignore".text = ''
+    \.git
+    \.gitignore
+    README.*
+    LICENSE.*
+  '';
+
   home.sessionPath = [
     "${config.home.homeDirectory}/.npm-global/bin"
   ];
 
-  home.activation.installTerminalFonts = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
-    font_dir="$HOME/Library/Fonts"
-    src_dir="${pkgs.nerd-fonts.jetbrains-mono}/share/fonts/truetype/NerdFonts/JetBrainsMono"
+  home.activation.installTerminalFonts = lib.mkIf pkgs.stdenv.isDarwin (
+    lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+      font_dir="$HOME/Library/Fonts"
+      src_dir="${pkgs.nerd-fonts.jetbrains-mono}/share/fonts/truetype/NerdFonts/JetBrainsMono"
 
-    $DRY_RUN_CMD /bin/mkdir -p "$font_dir"
-    for face in Regular Bold Italic BoldItalic; do
-      $DRY_RUN_CMD /bin/rm -f "$font_dir/JetBrainsMonoNerdFontMono-$face.ttf"
-      $DRY_RUN_CMD /usr/bin/install -m 0644 "$src_dir/JetBrainsMonoNerdFontMono-$face.ttf" "$font_dir/JetBrainsMonoNerdFontMono-$face.ttf"
-    done
+      $DRY_RUN_CMD /bin/mkdir -p "$font_dir"
+      for face in Regular Bold Italic BoldItalic; do
+        $DRY_RUN_CMD /bin/rm -f "$font_dir/JetBrainsMonoNerdFontMono-$face.ttf"
+        $DRY_RUN_CMD /usr/bin/install -m 0644 "$src_dir/JetBrainsMonoNerdFontMono-$face.ttf" "$font_dir/JetBrainsMonoNerdFontMono-$face.ttf"
+      done
 
-    if [ -z "''${DRY_RUN_CMD:-}" ]; then
-      /usr/bin/killall fontd >/dev/null 2>&1 || true
-    fi
-  '';
+      if [ -z "''${DRY_RUN_CMD:-}" ]; then
+        /usr/bin/killall fontd >/dev/null 2>&1 || true
+      fi
+    ''
+  );
 
   home.sessionVariables = {
     ALTERNATE_EDITOR = "";
@@ -65,6 +89,8 @@ home.packages = with pkgs; [
     '';
 
     shellAliases = {
+      dots = "git -C ${config.home.homeDirectory}/.dotfiles";
+      stow-dotfiles = "stow --dir=${config.home.homeDirectory}/.dotfiles --target=${config.home.homeDirectory}";
       emacs = "emacs -nw";
     };
   };

@@ -1,6 +1,6 @@
 # home.nix
 
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   # Home Manager needs a bit of information about you and the paths it should
@@ -16,14 +16,13 @@
   home.stateVersion = "23.05"; # Please read the comment before changing.
 
   imports = [
-	./modules/git.nix
-	./modules/vim.nix
-	./modules/cli.nix
-	./modules/tmux.nix
-	./modules/emacs.nix
+    ./modules/git.nix
+    ./modules/vim.nix
+    ./modules/cli.nix
+    ./modules/tmux.nix
+    ./modules/emacs.nix
     ./modules/java.nix
-];
-	
+  ];
 
   # The home.packages option allows you to install Nix packages into your
   # environment.
@@ -53,8 +52,7 @@
   home.file = {
     # # Building this configuration will create a copy of 'dotfiles/screenrc' in
     # # the Nix store. Activating the configuration will then make '~/.screenrc' a
-    # # symlink to the Nix store copy 
-
+    # # symlink to the Nix store copy
 
     # # You can also set the file content immediately.
     # ".gradle/gradle.properties".text = ''
@@ -73,9 +71,9 @@
   #  /etc/profiles/per-user/davish/etc/profile.d/hm-session-vars.sh
   #
   # if you don't want to manage your shell through Home Manager.
-	#  home.sessionVariables = {
-	#	EDITOR = "emacs";
-	#  };
+  #  home.sessionVariables = {
+  #    EDITOR = "emacs";
+  #  };
 
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;

@@ -3,7 +3,7 @@
 {
   programs.git = {
     enable = true;
-    
+
     # Global .gitignore applies to all repositories on your machine
     ignores = [
       ".DS_Store"
@@ -11,7 +11,7 @@
       "*~"
       ".direnv/"
     ];
-    
+
     settings = {
       user = {
         name = "Roshan Hegde";
@@ -21,13 +21,13 @@
       # Automatically set upstream branch tracking when pushing a new branch
       push.autoSetupRemote = true;
 
-      credential.helper = "osxkeychain";
+      credential.helper = if pkgs.stdenv.isDarwin then "osxkeychain" else "cache";
 
       core.editor = ''emacsclient -t -a ""'';
-      
+
       # Modern default branch naming
       init.defaultBranch = "main";
-      
+
       # Pull behavior (rebase by default keeps history cleaner)
       pull.rebase = true;
 
