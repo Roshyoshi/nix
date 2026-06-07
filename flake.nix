@@ -111,6 +111,14 @@
             "nix-command"
             "flakes"
           ];
+
+          nix.gc = {
+            automatic = true;
+            dates = "daily";
+            options = "--delete-older-than 7d";
+          };
+          nix.settings.auto-optimise-store = true;
+          
           nixpkgs.config = nixpkgsConfig;
           programs.zsh.enable = true;
 

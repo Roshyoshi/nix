@@ -17,6 +17,7 @@ in
       fd
       ripgrep
       cargo
+      zig
       clippy
       rust-analyzer
       rustc
