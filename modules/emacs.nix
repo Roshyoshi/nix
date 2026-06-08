@@ -18,6 +18,7 @@ let
     tsx = pkgs.tree-sitter-grammars.tree-sitter-tsx;
     typescript = pkgs.tree-sitter-grammars.tree-sitter-typescript;
     typst = pkgs.tree-sitter-grammars.tree-sitter-typst;
+    zig  = pkgs.tree-sitter-grammars.tree-sitter-zig;
   };
   treeSitterLibraryExtension = if pkgs.stdenv.isDarwin then "dylib" else "so";
   linkTreeSitterGrammar = lang: grammar: ''
@@ -63,6 +64,7 @@ in
       shfmt
       tree-sitter
       typescript-language-server
+      zls
     ]
     ++ lib.optionals pkgs.stdenv.isDarwin [
       coreutils-prefixed
